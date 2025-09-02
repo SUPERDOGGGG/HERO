@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+#禁止商用，需要可自行更改，邮箱576418229@qq.com
+#Prohibited for commercial use, can be changed on your own if needed, email address 576418229@qq.com
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奈克赛斯奥特曼主题曲 - 英雄 (Eiyuu) by doa - 优化版</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; line-height: 1.6; }
+        h1 { text-align: center; color: #007bff; }
+        .stanza { margin-bottom: 30px; padding: 15px; background-color: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .line { margin: 15px 0; padding: 10px; border-bottom: 1px solid #eee; transition: background-color 0.3s; }
+        .line:hover { background-color: #f8f9fa; }
+        .japanese { font-weight: bold; color: #000; font-size: 1.1em; }
+        .japanese .word { cursor: pointer; text-decoration: underline dotted; color: #007bff; margin-right: 2px; position: relative; }
+        .japanese .word .play-icon { font-size: 0.8em; color: #28a745; margin-left: 2px; cursor: pointer; }
+        .romaji { color: #555; font-style: italic; }
+        .chinese { color: #28a745; }
+        .word-breakdown { display: none; background-color: #e9ecef; padding: 15px; margin-top: 15px; border-left: 5px solid #007bff; border-radius: 5px; }
+        .word-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .word-table th, .word-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .word-table th { background-color: #f8f9fa; font-weight: bold; }
+        button { background-color: #007bff; color: white; border: none; padding: 8px 15px; cursor: pointer; margin: 5px 5px 5px 0; border-radius: 5px; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .play-btn { background-color: #28a745; }
+        .play-btn:hover { background-color: #1e7e34; }
+        .edit-btn { background-color: #ffc107; color: #333; }
+        .edit-btn:hover { background-color: #e0a800; }
+        #custom-section { margin-top: 50px; padding: 20px; background-color: #fff; border: 1px solid #ddd; border-radius: 8px; }
+        #custom-input { width: 100%; height: 150px; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; resize: vertical; }
+        #custom-output { margin-top: 20px; }
+        .custom-line { margin: 10px 0; padding: 10px; background-color: #f8f9fa; border-radius: 5px; }
+        .tooltip { position: absolute; bottom: 120%; left: 0; background-color: #555; color: #fff; padding: 5px; border-radius: 4px; white-space: nowrap; display: none; z-index: 10; }
+        .word:hover .tooltip { display: block; }
+    </style>
+    <script>
+        // 优化语音合成：缓存utterance以减少延迟
+        const speechCache = new Map();
+
+        function getUtterance(text, lang = 'ja-JP') {
+            if (speechCache.has(text)) return speechCache.get(text);
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                speechCache.set(text, utterance);
+                return utterance;
+            }
+            return null;
+        }
+
+        function speak(text, lang = 'ja-JP') {
+            const utterance = getUtterance(text, lang);
+            if (utterance) {
+                speechSynthesis.speak(utterance);
+            } else {
+                alert('您的浏览器不支持语音合成。');
+            }
+        }
+
+        function toggleBreakdown(id) {
+            const elem = document.getElementById(id);
+            elem.style.display = elem.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function editLine(lineId) {
+            const line = document.getElementById(lineId);
+            const japaneseElem = line.querySelector('.japanese');
+            const romaji = line.querySelector('.romaji').innerText;
+            const chinese = line.querySelector('.chinese').innerText;
+            const japaneseText = Array.from(japaneseElem.querySelectorAll('.word')).map(w => w.dataset.text).join(' ');
+            const newContent = prompt('编辑行 (格式: 日文单词用空格分隔 // 罗马音 // 中文)', `${japaneseText} // ${romaji} // ${chinese}`);
+            if (newContent) {
+                const parts = newContent.split('//').map(p => p.trim());
+                const words = parts[0].split(' ').filter(w => w);
+                let japaneseHTML = '';
+                words.forEach((word, index) => {
+                    const trans = prompt(`为单词 "${word}" 输入翻译（默认: ${word} 的翻译）`) || `${word} 的翻译`;
+                    japaneseHTML += `<span class="word" data-text="${word}" onclick="speak('${word}')">
+                        ${word}<span class="play-icon">▶</span>
+                        <span class="tooltip">${trans}</span>
+                    </span>`;
+                });
+                japaneseElem.innerHTML = japaneseHTML;
+                line.querySelector('.romaji').innerText = parts[1] || '';
+                line.querySelector('.chinese').innerText = parts[2] || '';
+                // 更新breakdown表（简化：重新生成）
+                const bdId = line.nextElementSibling.nextElementSibling.id; // 假设结构固定
+                const table = document.querySelector(`#${bdId} table`);
+                table.innerHTML = '<tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>';
+                words.forEach(word => {
+                    const row = `<tr><td>${word}</td><td>${word.toLowerCase()}</td><td>${word} 的翻译 (编辑后)</td></tr>`;
+                    table.innerHTML += row;
+                });
+            }
+        }
+
+        function addCustomContent() {
+            const input = document.getElementById('custom-input').value.trim();
+            if (!input) return;
+            const lines = input.split('\n');
+            let output = '';
+            let lineCount = document.querySelectorAll('.line').length + 1; // 继续编号
+            lines.forEach((lineText, index) => {
+                const parts = lineText.split('//').map(p => p.trim());
+                const japanese = parts[0] || '';
+                const romaji = parts[1] || '';
+                const chinese = parts[2] || '';
+                const words = japanese.split(/[\s、]/).filter(w => w);
+                let japaneseHTML = '';
+                let wordTable = '<table class="word-table"><tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>';
+                words.forEach((word) => {
+                    const fakeTrans = `${word} 的翻译`; // 可扩展为真实翻译
+                    const fakeRomaji = word.toLowerCase();
+                    japaneseHTML += `<span class="word" data-text="${word}" onclick="speak('${word}')">
+                        ${word}<span class="play-icon">▶</span>
+                        <span class="tooltip">${fakeTrans}</span>
+                    </span>`;
+                    wordTable += `<tr><td>${word}</td><td>${fakeRomaji}</td><td>${fakeTrans}</td></tr>`;
+                });
+                wordTable += '</table>';
+                const customId = `custom-line${lineCount + index}`;
+                const bdId = `custom-bd${lineCount + index}`;
+                output += `
+                    <div class="custom-line line" id="${customId}">
+                        <div class="japanese">${japaneseHTML}</div>
+                        <div class="romaji">${romaji}</div>
+                        <div class="chinese">${chinese}</div>
+                    </div>
+                    <button class="play-btn" onclick="speak('${japanese}')">播放整句</button>
+                    <button class="edit-btn" onclick="editLine('${customId}')">编辑</button>
+                    <button onclick="toggleBreakdown('${bdId}')">显示/隐藏逐字翻译</button>
+                    <div id="${bdId}" class="word-breakdown">${wordTable}</div>
+                `;
+            });
+            document.getElementById('custom-output').innerHTML += output; // 追加以支持多次导入
+        }
+    </script>
+</head>
+<body>
+    <h1>奈克赛斯奥特曼主题曲 - 英雄 (Eiyuu) by doa - 优化版</h1>
+    <p>优化说明：添加单独播放按钮（整句/单词），分离编辑功能（编辑按钮），单词hover显示翻译并有播放图标▶。完整歌词生成，优化JS缓存语音以减少延迟。自定义导入支持多行/单词编辑。</p>
+
+    <div class="stanza">
+        <!-- 第一段 -->
+        <div class="line" id="line1">
+            <div class="japanese">
+                <span class="word" data-text="カッコ" onclick="speak('カッコ')"><span class="play-icon">▶</span>カッコ<span class="tooltip">样子/帅气</span></span>
+                <span class="word" data-text="つけてる" onclick="speak('つけてる')"><span class="play-icon">▶</span>つけてる<span class="tooltip">附着/装作</span></span>
+                <span class="word" data-text="つもり" onclick="speak('つもり')"><span class="play-icon">▶</span>つもり<span class="tooltip">打算/意图</span></span>
+                <span class="word" data-text="で" onclick="speak('で')"><span class="play-icon">▶</span>で<span class="tooltip">以/用</span></span>
+                <span class="word" data-text="得意" onclick="speak('得意')"><span class="play-icon">▶</span>得意<span class="tooltip">得意/擅长</span></span>
+                <span class="word" data-text="になって" onclick="speak('になって')"><span class="play-icon">▶</span>になって<span class="tooltip">成为</span></span>
+            </div>
+            <div class="romaji">Kakko tsuketeru tsumori de tokuini natte</div>
+            <div class="chinese">裝帥裝得得意忘形</div>
+        </div>
+        <button class="play-btn" onclick="speak('カッコつけてるつもりで得意になって')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line1')">编辑</button>
+        <button onclick="toggleBreakdown('bd1')">显示/隐藏逐字翻译</button>
+        <div id="bd1" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>カッコ</td><td>kakko</td><td>样子/帅气</td></tr>
+                <tr><td>つけてる</td><td>tsuketeru</td><td>附着/装作</td></tr>
+                <tr><td>つもり</td><td>tsumori</td><td>打算/意图</td></tr>
+                <tr><td>で</td><td>de</td><td>以/用</td></tr>
+                <tr><td>得意</td><td>tokui</td><td>得意/擅长</td></tr>
+                <tr><td>になって</td><td>ni natte</td><td>成为</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line2">
+            <div class="japanese">
+                <span class="word" data-text="大事" onclick="speak('大事')"><span class="play-icon">▶</span>大事<span class="tooltip">大事/重要</span></span>
+                <span class="word" data-text="な" onclick="speak('な')"><span class="play-icon">▶</span>な<span class="tooltip">的</span></span>
+                <span class="word" data-text="事" onclick="speak('事')"><span class="play-icon">▶</span>事<span class="tooltip">事/事情</span></span>
+                <span class="word" data-text="は" onclick="speak('は')"><span class="play-icon">▶</span>は<span class="tooltip">是/主题助词</span></span>
+                <span class="word" data-text="全部" onclick="speak('全部')"><span class="play-icon">▶</span>全部<span class="tooltip">全部</span></span>
+                <span class="word" data-text="置き去り" onclick="speak('置き去り')"><span class="play-icon">▶</span>置き去り<span class="tooltip">放置不管/遗弃</span></span>
+                <span class="word" data-text="に" onclick="speak('に')"><span class="play-icon">▶</span>に<span class="tooltip">成</span></span>
+                <span class="word" data-text="しちゃって" onclick="speak('しちゃって')"><span class="play-icon">▶</span>しちゃって<span class="tooltip">做了（口语）</span></span>
+            </div>
+            <div class="romaji">Daiji na koto wa zenbu oki zari ni shichatte</div>
+            <div class="chinese">重要的事全部都被丟下了</div>
+        </div>
+        <button class="play-btn" onclick="speak('大事な事は全部置き去りにしちゃって')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line2')">编辑</button>
+        <button onclick="toggleBreakdown('bd2')">显示/隐藏逐字翻译</button>
+        <div id="bd2" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>大事</td><td>daiji</td><td>大事/重要</td></tr>
+                <tr><td>な</td><td>na</td><td>的</td></tr>
+                <tr><td>事</td><td>koto</td><td>事/事情</td></tr>
+                <tr><td>は</td><td>wa</td><td>是/主题助词</td></tr>
+                <tr><td>全部</td><td>zenbu</td><td>全部</td></tr>
+                <tr><td>置き去り</td><td>okizari</td><td>放置不管/遗弃</td></tr>
+                <tr><td>に</td><td>ni</td><td>成</td></tr>
+                <tr><td>しちゃって</td><td>shichatte</td><td>做了（口语）</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line3">
+            <div class="japanese">
+                <span class="word" data-text="自分" onclick="speak('自分')"><span class="play-icon">▶</span>自分<span class="tooltip">自己</span></span>
+                <span class="word" data-text="で" onclick="speak('で')"><span class="play-icon">▶</span>で<span class="tooltip">用</span></span>
+                <span class="word" data-text="自分" onclick="speak('自分')"><span class="play-icon">▶</span>自分<span class="tooltip">自己</span></span>
+                <span class="word" data-text="を" onclick="speak('を')"><span class="play-icon">▶</span>を<span class="tooltip">对象助词</span></span>
+                <span class="word" data-text="苦しめている" onclick="speak('苦しめている')"><span class="play-icon">▶</span>苦しめている<span class="tooltip">折磨着</span></span>
+                <span class="word" data-text="囚人" onclick="speak('囚人')"><span class="play-icon">▶</span>囚人<span class="tooltip">囚人</span></span>
+            </div>
+            <div class="romaji">Jibun de jibun o kurushi meteiru shuujin</div>
+            <div class="chinese">自己折磨自己的囚犯</div>
+        </div>
+        <button class="play-btn" onclick="speak('自分で自分を苦しめている囚人')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line3')">编辑</button>
+        <button onclick="toggleBreakdown('bd3')">显示/隐藏逐字翻译</button>
+        <div id="bd3" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>自分</td><td>jibun</td><td>自己</td></tr>
+                <tr><td>で</td><td>de</td><td>用</td></tr>
+                <tr><td>自分</td><td>jibun</td><td>自己</td></tr>
+                <tr><td>を</td><td>o</td><td>对象助词</td></tr>
+                <tr><td>苦しめている</td><td>kurushimete iru</td><td>折磨着</td></tr>
+                <tr><td>囚人</td><td>shuujin</td><td>囚人</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line4">
+            <div class="japanese">
+                <span class="word" data-text="そんな" onclick="speak('そんな')"><span class="play-icon">▶</span>そんな<span class="tooltip">那样的</span></span>
+                <span class="word" data-text="僕" onclick="speak('僕')"><span class="play-icon">▶</span>僕<span class="tooltip">我（男性）</span></span>
+                <span class="word" data-text="に" onclick="speak('に')"><span class="play-icon">▶</span>に<span class="tooltip">对</span></span>
+                <span class="word" data-text="サヨナラ" onclick="speak('サヨナラ')"><span class="play-icon">▶</span>サヨナラ<span class="tooltip">再见</span></span>
+                <span class="word" data-text="さ" onclick="speak('さ')"><span class="play-icon">▶</span>さ<span class="tooltip">语气助词</span></span>
+                <span class="word" data-text="Transformation!" onclick="speak('Transformation!')"><span class="play-icon">▶</span>Transformation!<span class="tooltip">转变！</span></span>
+            </div>
+            <div class="romaji">Sonna boku ni sayonara sa Transformation!</div>
+            <div class="chinese">向那樣的我說再見吧 Transformation!</div>
+        </div>
+        <button class="play-btn" onclick="speak('そんな僕にサヨナラさ Transformation!')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line4')">编辑</button>
+        <button onclick="toggleBreakdown('bd4')">显示/隐藏逐字翻译</button>
+        <div id="bd4" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>そんな</td><td>sonna</td><td>那样的</td></tr>
+                <tr><td>僕</td><td>boku</td><td>我（男性）</td></tr>
+                <tr><td>に</td><td>ni</td><td>对</td></tr>
+                <tr><td>サヨナラ</td><td>sayonara</td><td>再见</td></tr>
+                <tr><td>さ</td><td>sa</td><td>语气助词</td></tr>
+                <tr><td>Transformation!</td><td>Transformation</td><td>转变！</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="stanza">
+        <!-- 第二部分 -->
+        <div class="line" id="line5">
+            <div class="japanese">
+                <span class="word" data-text="闇" onclick="speak('闇')"><span class="play-icon">▶</span>闇<span class="tooltip">黑暗</span></span>
+                <span class="word" data-text="が" onclick="speak('が')"><span class="play-icon">▶</span>が<span class="tooltip">主语助词</span></span>
+                <span class="word" data-text="怖くて" onclick="speak('怖くて')"><span class="play-icon">▶</span>怖くて<span class="tooltip">可怕而</span></span>
+                <span class="word" data-text="どうする" onclick="speak('どうする')"><span class="play-icon">▶</span>どうする<span class="tooltip">怎么办</span></span>
+            </div>
+            <div class="romaji">Yami ga kowakute dou suru</div>
+            <div class="chinese">害怕黑暗要怎麼辦</div>
+        </div>
+        <button class="play-btn" onclick="speak('闇が怖くてどうする')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line5')">编辑</button>
+        <button onclick="toggleBreakdown('bd5')">显示/隐藏逐字翻译</button>
+        <div id="bd5" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>闇</td><td>yami</td><td>黑暗</td></tr>
+                <tr><td>が</td><td>ga</td><td>主语助词</td></tr>
+                <tr><td>怖くて</td><td>kowakute</td><td>可怕而</td></tr>
+                <tr><td>どうする</td><td>dou suru</td><td>怎么办</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line6">
+            <div class="japanese">
+                <span class="word" data-text="アイツ" onclick="speak('アイツ')"><span class="play-icon">▶</span>アイツ<span class="tooltip">那家伙</span></span>
+                <span class="word" data-text="が" onclick="speak('が')"><span class="play-icon">▶</span>が<span class="tooltip">主语助词</span></span>
+                <span class="word" data-text="怖くて" onclick="speak('怖くて')"><span class="play-icon">▶</span>怖くて<span class="tooltip">可怕而</span></span>
+                <span class="word" data-text="どうする" onclick="speak('どうする')"><span class="play-icon">▶</span>どうする<span class="tooltip">怎么办</span></span>
+            </div>
+            <div class="romaji">Aitsu ga kowakute dou suru</div>
+            <div class="chinese">害怕那家伙要怎麼辦</div>
+        </div>
+        <button class="play-btn" onclick="speak('アイツが怖くてどうする')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line6')">编辑</button>
+        <button onclick="toggleBreakdown('bd6')">显示/隐藏逐字翻译</button>
+        <div id="bd6" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>アイツ</td><td>aitsu</td><td>那家伙</td></tr>
+                <tr><td>が</td><td>ga</td><td>主语助词</td></tr>
+                <tr><td>怖くて</td><td>kowakute</td><td>可怕而</td></tr>
+                <tr><td>どうする</td><td>dou suru</td><td>怎么办</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line7">
+            <div class="japanese">
+                <span class="word" data-text="足踏み" onclick="speak('足踏み')"><span class="play-icon">▶</span>足踏み<span class="tooltip">原地踏步</span></span>
+                <span class="word" data-text="してる" onclick="speak('してる')"><span class="play-icon">▶</span>してる<span class="tooltip">做着</span></span>
+                <span class="word" data-text="だけ" onclick="speak('だけ')"><span class="play-icon">▶</span>だけ<span class="tooltip">只</span></span>
+                <span class="word" data-text="じゃ" onclick="speak('じゃ')"><span class="play-icon">▶</span>じゃ<span class="tooltip">的话（口语）</span></span>
+            </div>
+            <div class="romaji">Ashibumi shiteru dake ja</div>
+            <div class="chinese">只是在原地踏步的話</div>
+        </div>
+        <button class="play-btn" onclick="speak('足踏みしてるだけじゃ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line7')">编辑</button>
+        <button onclick="toggleBreakdown('bd7')">显示/隐藏逐字翻译</button>
+        <div id="bd7" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>足踏み</td><td>ashibumi</td><td>原地踏步</td></tr>
+                <tr><td>してる</td><td>shiteru</td><td>做着</td></tr>
+                <tr><td>だけ</td><td>dake</td><td>只</td></tr>
+                <tr><td>じゃ</td><td>ja</td><td>的话（口语）</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line8">
+            <div class="japanese">
+                <span class="word" data-text="進まない" onclick="speak('進まない')"><span class="play-icon">▶</span>進まない<span class="tooltip">不會前進</span></span>
+            </div>
+            <div class="romaji">Susuma nai</div>
+            <div class="chinese">不會前進</div>
+        </div>
+        <button class="play-btn" onclick="speak('進まない')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line8')">编辑</button>
+        <button onclick="toggleBreakdown('bd8')">显示/隐藏逐字翻译</button>
+        <div id="bd8" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>進まない</td><td>susuma nai</td><td>不前进</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line9">
+            <div class="japanese">
+                <span class="word" data-text="男" onclick="speak('男')"><span class="play-icon">▶</span>男<span class="tooltip">男人</span></span>
+                <span class="word" data-text="なら" onclick="speak('なら')"><span class="play-icon">▶</span>なら<span class="tooltip">如果</span></span>
+                <span class="word" data-text="誰か" onclick="speak('誰か')"><span class="play-icon">▶</span>誰か<span class="tooltip">某人</span></span>
+                <span class="word" data-text="の" onclick="speak('の')"><span class="play-icon">▶</span>の<span class="tooltip">的</span></span>
+                <span class="word" data-text="ために" onclick="speak('ために')"><span class="play-icon">▶</span>ために<span class="tooltip">为了</span></span>
+                <span class="word" data-text="強くなれ" onclick="speak('強くなれ')"><span class="play-icon">▶</span>強くなれ<span class="tooltip">变强吧</span></span>
+            </div>
+            <div class="romaji">Otoko nara dareka no tame ni tsuyoku nare</div>
+            <div class="chinese">如果是男人的話 為了某人而變強吧</div>
+        </div>
+        <button class="play-btn" onclick="speak('男なら誰かのために強くなれ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line9')">编辑</button>
+        <button onclick="toggleBreakdown('bd9')">显示/隐藏逐字翻译</button>
+        <div id="bd9" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>男</td><td>otoko</td><td>男人</td></tr>
+                <tr><td>なら</td><td>nara</td><td>如果</td></tr>
+                <tr><td>誰か</td><td>dareka</td><td>某人</td></tr>
+                <tr><td>の</td><td>no</td><td>的</td></tr>
+                <tr><td>ために</td><td>tame ni</td><td>为了</td></tr>
+                <tr><td>強くなれ</td><td>tsuyoku nare</td><td>变强吧</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line10">
+            <div class="japanese">
+                <span class="word" data-text="歯" onclick="speak('歯')"><span class="play-icon">▶</span>歯<span class="tooltip">牙齿</span></span>
+                <span class="word" data-text="を" onclick="speak('を')"><span class="play-icon">▶</span>を<span class="tooltip">对象</span></span>
+                <span class="word" data-text="食いしばって" onclick="speak('食いしばって')"><span class="play-icon">▶</span>食いしばって<span class="tooltip">咬紧牙关</span></span>
+                <span class="word" data-text="思いっきり" onclick="speak('思いっきり')"><span class="play-icon">▶</span>思いっきり<span class="tooltip">全力</span></span>
+                <span class="word" data-text="守り抜け" onclick="speak('守り抜け')"><span class="play-icon">▶</span>守り抜け<span class="tooltip">守护到底</span></span>
+            </div>
+            <div class="romaji">Ha o kuishibatte omoikkiri mamori nuke</div>
+            <div class="chinese">咬緊牙關 全力守護到底</div>
+        </div>
+        <button class="play-btn" onclick="speak('歯を食いしばって 思いっきり守り抜け')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line10')">编辑</button>
+        <button onclick="toggleBreakdown('bd10')">显示/隐藏逐字翻译</button>
+        <div id="bd10" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>歯</td><td>ha</td><td>牙齿</td></tr>
+                <tr><td>を</td><td>o</td><td>对象</td></tr>
+                <tr><td>食いしばって</td><td>kuishibatte</td><td>咬紧</td></tr>
+                <tr><td>思いっきり</td><td>omoikkiri</td><td>全力</td></tr>
+                <tr><td>守り抜け</td><td>mamori nuke</td><td>守护到底</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line11">
+            <div class="japanese">
+                <span class="word" data-text="転んでも" onclick="speak('転んでも')"><span class="play-icon">▶</span>転んでも<span class="tooltip">摔倒也没关系</span></span>
+                <span class="word" data-text="いいよ" onclick="speak('いいよ')"><span class="play-icon">▶</span>いいよ<span class="tooltip">好</span></span>
+                <span class="word" data-text="また" onclick="speak('また')"><span class="play-icon">▶</span>また<span class="tooltip">再次</span></span>
+                <span class="word" data-text="立ち上がれば" onclick="speak('立ち上がれば')"><span class="play-icon">▶</span>立ち上がれば<span class="tooltip">站起来就</span></span>
+                <span class="word" data-text="いい" onclick="speak('いい')"><span class="play-icon">▶</span>いい<span class="tooltip">好</span></span>
+            </div>
+            <div class="romaji">Koronde mo ii yo mata tachi agareba ii</div>
+            <div class="chinese">摔倒也沒關係 再次站起來就好</div>
+        </div>
+        <button class="play-btn" onclick="speak('転んでもいいよ また立ち上がればいい')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line11')">编辑</button>
+        <button onclick="toggleBreakdown('bd11')">显示/隐藏逐字翻译</button>
+        <div id="bd11" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>転んでも</td><td>koronde mo</td><td>摔倒也</td></tr>
+                <tr><td>いいよ</td><td>ii yo</td><td>好</td></tr>
+                <tr><td>また</td><td>mata</td><td>再次</td></tr>
+                <tr><td>立ち上がれば</td><td>tachi agareba</td><td>站起来就</td></tr>
+                <tr><td>いい</td><td>ii</td><td>好</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line12">
+            <div class="japanese">
+                <span class="word" data-text="ただ" onclick="speak('ただ')"><span class="play-icon">▶</span>ただ<span class="tooltip">只是</span></span>
+                <span class="word" data-text="それだけ" onclick="speak('それだけ')"><span class="play-icon">▶</span>それだけ<span class="tooltip">那样就够</span></span>
+                <span class="word" data-text="できれば" onclick="speak('できれば')"><span class="play-icon">▶</span>できれば<span class="tooltip">如果能</span></span>
+            </div>
+            <div class="romaji">Tada sore dake deki reba</div>
+            <div class="chinese">只要那樣就能</div>
+        </div>
+        <button class="play-btn" onclick="speak('ただそれだけ できれば')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line12')">编辑</button>
+        <button onclick="toggleBreakdown('bd12')">显示/隐藏逐字翻译</button>
+        <div id="bd12" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>ただ</td><td>tada</td><td>只是</td></tr>
+                <tr><td>それだけ</td><td>sore dake</td><td>那样就够</td></tr>
+                <tr><td>できれば</td><td>deki reba</td><td>如果能</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line13">
+            <div class="japanese">
+                <span class="word" data-text="英雄" onclick="speak('英雄')"><span class="play-icon">▶</span>英雄<span class="tooltip">英雄</span></span>
+                <span class="word" data-text="さ" onclick="speak('さ')"><span class="play-icon">▶</span>さ<span class="tooltip">语气</span></span>
+            </div>
+            <div class="romaji">Eiyuu sa</div>
+            <div class="chinese">就是英雄</div>
+        </div>
+        <button class="play-btn" onclick="speak('英雄さ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line13')">编辑</button>
+        <button onclick="toggleBreakdown('bd13')">显示/隐藏逐字翻译</button>
+        <div id="bd13" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>英雄</td><td>eiyuu</td><td>英雄</td></tr>
+                <tr><td>さ</td><td>sa</td><td>语气</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="stanza">
+        <!-- 第二段 -->
+        <div class="line" id="line14">
+            <div class="japanese">
+                <span class="word" data-text="今日も" onclick="speak('今日も')"><span class="play-icon">▶</span>今日も<span class="tooltip">今天也</span></span>
+                <span class="word" data-text="なんだか" onclick="speak('なんだか')"><span class="play-icon">▶</span>なんだか<span class="tooltip">不知怎么</span></span>
+                <span class="word" data-text="やる気" onclick="speak('やる気')"><span class="play-icon">▶</span>やる気<span class="tooltip">干劲</span></span>
+                <span class="word" data-text="が" onclick="speak('が')"><span class="play-icon">▶</span>が<span class="tooltip">主语</span></span>
+                <span class="word" data-text="起きない" onclick="speak('起きない')"><span class="play-icon">▶</span>起きない<span class="tooltip">不起</span></span>
+                <span class="word" data-text="なんて" onclick="speak('なんて')"><span class="play-icon">▶</span>なんて<span class="tooltip">什么的</span></span>
+            </div>
+            <div class="romaji">Kyou mo nanda ka yaruki ga okinai nante</div>
+            <div class="chinese">今天也提不起勁什麼的</div>
+        </div>
+        <button class="play-btn" onclick="speak('今日もなんだかやる気が起きないなんて')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line14')">编辑</button>
+        <button onclick="toggleBreakdown('bd14')">显示/隐藏逐字翻译</button>
+        <div id="bd14" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>今日も</td><td>kyou mo</td><td>今天也</td></tr>
+                <tr><td>なんだか</td><td>nanda ka</td><td>不知怎么</td></tr>
+                <tr><td>やる気</td><td>yaruki</td><td>干劲</td></tr>
+                <tr><td>が</td><td>ga</td><td>主语</td></tr>
+                <tr><td>起きない</td><td>okinai</td><td>不起</td></tr>
+                <tr><td>なんて</td><td>nante</td><td>什么的</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line15">
+            <div class="japanese">
+                <span class="word" data-text="甘え" onclick="speak('甘え')"><span class="play-icon">▶</span>甘え<span class="tooltip">撒娇</span></span>
+                <span class="word" data-text="尽くし" onclick="speak('尽くし')"><span class="play-icon">▶</span>尽くし<span class="tooltip">尽</span></span>
+                <span class="word" data-text="の" onclick="speak('の')"><span class="play-icon">▶</span>の<span class="tooltip">的</span></span>
+                <span class="word" data-text="自分" onclick="speak('自分')"><span class="play-icon">▶</span>自分<span class="tooltip">自己</span></span>
+                <span class="word" data-text="が" onclick="speak('が')"><span class="play-icon">▶</span>が<span class="tooltip">主语</span></span>
+                <span class="word" data-text="本当" onclick="speak('本当')"><span class="play-icon">▶</span>本当<span class="tooltip">真的</span></span>
+                <span class="word" data-text="は" onclick="speak('は')"><span class="play-icon">▶</span>は<span class="tooltip">是</span></span>
+                <span class="word" data-text="嫌いで" onclick="speak('嫌いで')"><span class="play-icon">▶</span>嫌いで<span class="tooltip">讨厌</span></span>
+            </div>
+            <div class="romaji">Amae tsukushi no jibun ga hontou wa kirai de</div>
+            <div class="chinese">撒娇到底的自己其實討厭</div>
+        </div>
+        <button class="play-btn" onclick="speak('甘え尽くしの自分が本当は嫌いで')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line15')">编辑</button>
+        <button onclick="toggleBreakdown('bd15')">显示/隐藏逐字翻译</button>
+        <div id="bd15" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>甘え</td><td>amae</td><td>撒娇</td></tr>
+                <tr><td>尽くし</td><td>tsukushi</td><td>尽</td></tr>
+                <tr><td>の</td><td>no</td><td>的</td></tr>
+                <tr><td>自分</td><td>jibun</td><td>自己</td></tr>
+                <tr><td>が</td><td>ga</td><td>主语</td></tr>
+                <tr><td>本当</td><td>hontou</td><td>真的</td></tr>
+                <tr><td>は</td><td>wa</td><td>是</td></tr>
+                <tr><td>嫌いで</td><td>kirai de</td><td>讨厌</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line16">
+            <div class="japanese">
+                <span class="word" data-text="とりあえず" onclick="speak('とりあえず')"><span class="play-icon">▶</span>とりあえず<span class="tooltip">暂且</span></span>
+                <span class="word" data-text="は" onclick="speak('は')"><span class="play-icon">▶</span>は<span class="tooltip">是</span></span>
+                <span class="word" data-text="外" onclick="speak('外')"><span class="play-icon">▶</span>外<span class="tooltip">外面</span></span>
+                <span class="word" data-text="で" onclick="speak('で')"><span class="play-icon">▶</span>で<span class="tooltip">在</span></span>
+                <span class="word" data-text="深呼吸" onclick="speak('深呼吸')"><span class="play-icon">▶</span>深呼吸<span class="tooltip">深呼吸</span></span>
+                <span class="word" data-text="更新" onclick="speak('更新')"><span class="play-icon">▶</span>更新<span class="tooltip">更新</span></span>
+            </div>
+            <div class="romaji">Toriaezu wa omote de shinkokyuu koushin</div>
+            <div class="chinese">暫且在外面深呼吸 更新</div>
+        </div>
+        <button class="play-btn" onclick="speak('とりあえずは外で深呼吸 更新')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line16')">编辑</button>
+        <button onclick="toggleBreakdown('bd16')">显示/隐藏逐字翻译</button>
+        <div id="bd16" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>とりあえず</td><td>toriaezu</td><td>暂且</td></tr>
+                <tr><td>は</td><td>wa</td><td>是</td></tr>
+                <tr><td>外</td><td>omote</td><td>外面</td></tr>
+                <tr><td>で</td><td>de</td><td>在</td></tr>
+                <tr><td>深呼吸</td><td>shinkokyuu</td><td>深呼吸</td></tr>
+                <tr><td>更新</td><td>koushin</td><td>更新</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line17">
+            <div class="japanese">
+                <span class="word" data-text="そんじゃ" onclick="speak('そんじゃ')"><span class="play-icon">▶</span>そんじゃ<span class="tooltip">那么</span></span>
+                <span class="word" data-text="今" onclick="speak('今')"><span class="play-icon">▶</span>今<span class="tooltip">现在</span></span>
+                <span class="word" data-text="から" onclick="speak('から')"><span class="play-icon">▶</span>から<span class="tooltip">从</span></span>
+                <span class="word" data-text="しましょうか" onclick="speak('しましょうか')"><span class="play-icon">▶</span>しましょうか<span class="tooltip">做吧</span></span>
+                <span class="word" data-text="Transformation!" onclick="speak('Transformation!')"><span class="play-icon">▶</span>Transformation!<span class="tooltip">转变！</span></span>
+            </div>
+            <div class="romaji">Sonja ima kara shimashou ka Transformation!</div>
+            <div class="chinese">那么現在開始吧 Transformation!</div>
+        </div>
+        <button class="play-btn" onclick="speak('そんじゃ今からしましょうか Transformation!')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line17')">编辑</button>
+        <button onclick="toggleBreakdown('bd17')">显示/隐藏逐字翻译</button>
+        <div id="bd17" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>そんじゃ</td><td>sonja</td><td>那么</td></tr>
+                <tr><td>今</td><td>ima</td><td>现在</td></tr>
+                <tr><td>から</td><td>kara</td><td>从</td></tr>
+                <tr><td>しましょうか</td><td>shimashou ka</td><td>做吧</td></tr>
+                <tr><td>Transformation!</td><td>Transformation</td><td>转变！</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="stanza">
+        <div class="line" id="line18">
+            <div class="japanese">
+                <span class="word" data-text="弱気" onclick="speak('弱気')"><span class="play-icon">▶</span>弱気<span class="tooltip">懦弱</span></span>
+                <span class="word" data-text="になって" onclick="speak('になって')"><span class="play-icon">▶</span>になって<span class="tooltip">成为</span></span>
+                <span class="word" data-text="どうする" onclick="speak('どうする')"><span class="play-icon">▶</span>どうする<span class="tooltip">怎么办</span></span>
+            </div>
+            <div class="romaji">Yowaki ni natte dou suru</div>
+            <div class="chinese">變得懦弱要怎麼辦</div>
+        </div>
+        <button class="play-btn" onclick="speak('弱気になってどうする')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line18')">编辑</button>
+        <button onclick="toggleBreakdown('bd18')">显示/隐藏逐字翻译</button>
+        <div id="bd18" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>弱気</td><td>yowaki</td><td>懦弱</td></tr>
+                <tr><td>になって</td><td>ni natte</td><td>成为</td></tr>
+                <tr><td>どうする</td><td>dou suru</td><td>怎么办</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line19">
+            <div class="japanese">
+                <span class="word" data-text="明日" onclick="speak('明日')"><span class="play-icon">▶</span>明日<span class="tooltip">明天</span></span>
+                <span class="word" data-text="の" onclick="speak('の')"><span class="play-icon">▶</span>の<span class="tooltip">的</span></span>
+                <span class="word" data-text="君" onclick="speak('君')"><span class="play-icon">▶</span>君<span class="tooltip">你</span></span>
+                <span class="word" data-text="は" onclick="speak('は')"><span class="play-icon">▶</span>は<span class="tooltip">是</span></span>
+                <span class="word" data-text="どうする" onclick="speak('どうする')"><span class="play-icon">▶</span>どうする<span class="tooltip">怎么办</span></span>
+            </div>
+            <div class="romaji">Ashita no kimi wa dou suru?</div>
+            <div class="chinese">明天的你怎麼辦？</div>
+        </div>
+        <button class="play-btn" onclick="speak('明日の君はどうする？')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line19')">编辑</button>
+        <button onclick="toggleBreakdown('bd19')">显示/隐藏逐字翻译</button>
+        <div id="bd19" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>明日</td><td>ashita</td><td>明天</td></tr>
+                <tr><td>の</td><td>no</td><td>的</td></tr>
+                <tr><td>君</td><td>kimi</td><td>你</td></tr>
+                <tr><td>は</td><td>wa</td><td>是</td></tr>
+                <tr><td>どうする</td><td>dou suru</td><td>怎么办</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line20">
+            <div class="japanese">
+                <span class="word" data-text="黙って" onclick="speak('黙って')"><span class="play-icon">▶</span>黙って<span class="tooltip">沉默</span></span>
+                <span class="word" data-text="下" onclick="speak('下')"><span class="play-icon">▶</span>下<span class="tooltip">下</span></span>
+                <span class="word" data-text="向いてちゃ" onclick="speak('向いてちゃ')"><span class="play-icon">▶</span>向いてちゃ<span class="tooltip">低头的话</span></span>
+            </div>
+            <div class="romaji">Damatte shita muite cha</div>
+            <div class="chinese">沉默低頭的話</div>
+        </div>
+        <button class="play-btn" onclick="speak('黙って下向いてちゃ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line20')">编辑</button>
+        <button onclick="toggleBreakdown('bd20')">显示/隐藏逐字翻译</button>
+        <div id="bd20" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>黙って</td><td>damatte</td><td>沉默</td></tr>
+                <tr><td>下</td><td>shita</td><td>下</td></tr>
+                <tr><td>向いてちゃ</td><td>muite cha</td><td>面向（口语）</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line21">
+            <div class="japanese">
+                <span class="word" data-text="聞こえない" onclick="speak('聞こえない')"><span class="play-icon">▶</span>聞こえない<span class="tooltip">听不到</span></span>
+            </div>
+            <div class="romaji">Kiko enai</div>
+            <div class="chinese">聽不到</div>
+        </div>
+        <button class="play-btn" onclick="speak('聞こえない')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line21')">编辑</button>
+        <button onclick="toggleBreakdown('bd21')">显示/隐藏逐字翻译</button>
+        <div id="bd21" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>聞こえない</td><td>kiko enai</td><td>听不到</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line22">
+            <div class="japanese">
+                <span class="word" data-text="男" onclick="speak('男')"><span class="play-icon">▶</span>男<span class="tooltip">男人</span></span>
+                <span class="word" data-text="なら" onclick="speak('なら')"><span class="play-icon">▶</span>なら<span class="tooltip">如果</span></span>
+                <span class="word" data-text="誰か" onclick="speak('誰か')"><span class="play-icon">▶</span>誰か<span class="tooltip">某人</span></span>
+                <span class="word" data-text="の" onclick="speak('の')"><span class="play-icon">▶</span>の<span class="tooltip">的</span></span>
+                <span class="word" data-text="ために" onclick="speak('ために')"><span class="play-icon">▶</span>ために<span class="tooltip">为了</span></span>
+                <span class="word" data-text="強くなれ" onclick="speak('強くなれ')"><span class="play-icon">▶</span>強くなれ<span class="tooltip">变强吧</span></span>
+            </div>
+            <div class="romaji">Otoko nara dareka no tame ni tsuyoku nare</div>
+            <div class="chinese">如果是男人的話 為了某人而變強吧</div>
+        </div>
+        <button class="play-btn" onclick="speak('男なら誰かのために強くなれ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line22')">编辑</button>
+        <button onclick="toggleBreakdown('bd22')">显示/隐藏逐字翻译</button>
+        <div id="bd22" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>男</td><td>otoko</td><td>男人</td></tr>
+                <tr><td>なら</td><td>nara</td><td>如果</td></tr>
+                <tr><td>誰か</td><td>dareka</td><td>某人</td></tr>
+                <tr><td>の</td><td>no</td><td>的</td></tr>
+                <tr><td>ために</td><td>tame ni</td><td>为了</td></tr>
+                <tr><td>強くなれ</td><td>tsuyoku nare</td><td>变强吧</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line23">
+            <div class="japanese">
+                <span class="word" data-text="ぶつかり合って" onclick="speak('ぶつかり合って')"><span class="play-icon">▶</span>ぶつかり合って<span class="tooltip">碰撞</span></span>
+                <span class="word" data-text="精一杯" onclick="speak('精一杯')"><span class="play-icon">▶</span>精一杯<span class="tooltip">全力</span></span>
+                <span class="word" data-text="やってみろ" onclick="speak('やってみろ')"><span class="play-icon">▶</span>やってみろ<span class="tooltip">试试看</span></span>
+            </div>
+            <div class="romaji">Butsukari atte seiippai yatte miro</div>
+            <div class="chinese">碰撞吧 盡全力試試看</div>
+        </div>
+        <button class="play-btn" onclick="speak('ぶつかり合って 精一杯やってみろ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line23')">编辑</button>
+        <button onclick="toggleBreakdown('bd23')">显示/隐藏逐字翻译</button>
+        <div id="bd23" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>ぶつかり合って</td><td>butsukari atte</td><td>碰撞</td></tr>
+                <tr><td>精一杯</td><td>seiippai</td><td>全力</td></tr>
+                <tr><td>やってみろ</td><td>yatte miro</td><td>试试看</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line24">
+            <div class="japanese">
+                <span class="word" data-text="泣いても" onclick="speak('泣いても')"><span class="play-icon">▶</span>泣いても<span class="tooltip">哭也没关系</span></span>
+                <span class="word" data-text="いいよ" onclick="speak('いいよ')"><span class="play-icon">▶</span>いいよ<span class="tooltip">好</span></span>
+                <span class="word" data-text="また" onclick="speak('また')"><span class="play-icon">▶</span>また<span class="tooltip">再次</span></span>
+                <span class="word" data-text="笑えれば" onclick="speak('笑えれば')"><span class="play-icon">▶</span>笑えれば<span class="tooltip">笑就</span></span>
+                <span class="word" data-text="いい" onclick="speak('いい')"><span class="play-icon">▶</span>いい<span class="tooltip">好</span></span>
+            </div>
+            <div class="romaji">Naitemo ii yo mata waraereba ii</div>
+            <div class="chinese">哭也沒關係 再次笑就好</div>
+        </div>
+        <button class="play-btn" onclick="speak('泣いてもいいよ また笑えればいい')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line24')">编辑</button>
+        <button onclick="toggleBreakdown('bd24')">显示/隐藏逐字翻译</button>
+        <div id="bd24" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>泣いても</td><td>naitemo</td><td>哭也</td></tr>
+                <tr><td>いいよ</td><td>ii yo</td><td>好</td></tr>
+                <tr><td>また</td><td>mata</td><td>再次</td></tr>
+                <tr><td>笑えれば</td><td>waraereba</td><td>笑就</td></tr>
+                <tr><td>いい</td><td>ii</td><td>好</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line25">
+            <div class="japanese">
+                <span class="word" data-text="ただ" onclick="speak('ただ')"><span class="play-icon">▶</span>ただ<span class="tooltip">只是</span></span>
+                <span class="word" data-text="それだけ" onclick="speak('それだけ')"><span class="play-icon">▶</span>それだけ<span class="tooltip">那样就够</span></span>
+                <span class="word" data-text="できれば" onclick="speak('できれば')"><span class="play-icon">▶</span>できれば<span class="tooltip">如果能</span></span>
+            </div>
+            <div class="romaji">Tada sore dake dekireba</div>
+            <div class="chinese">只要那樣就能</div>
+        </div>
+        <button class="play-btn" onclick="speak('ただそれだけ できれば')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line25')">编辑</button>
+        <button onclick="toggleBreakdown('bd25')">显示/隐藏逐字翻译</button>
+        <div id="bd25" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>ただ</td><td>tada</td><td>只是</td></tr>
+                <tr><td>それだけ</td><td>sore dake</td><td>那样就够</td></tr>
+                <tr><td>できれば</td><td>dekireba</td><td>如果能</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line26">
+            <div class="japanese">
+                <span class="word" data-text="英雄" onclick="speak('英雄')"><span class="play-icon">▶</span>英雄<span class="tooltip">英雄</span></span>
+                <span class="word" data-text="さ" onclick="speak('さ')"><span class="play-icon">▶</span>さ<span class="tooltip">语气</span></span>
+            </div>
+            <div class="romaji">Eiyuu sa</div>
+            <div class="chinese">就是英雄</div>
+        </div>
+        <button class="play-btn" onclick="speak('英雄さ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line26')">编辑</button>
+        <button onclick="toggleBreakdown('bd26')">显示/隐藏逐字翻译</button>
+        <div id="bd26" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>英雄</td><td>eiyuu</td><td>英雄</td></tr>
+                <tr><td>さ</td><td>sa</td><td>语气</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="stanza">
+        <!-- wow部分 -->
+        <div class="line" id="line27">
+            <div class="japanese">
+                <span class="word" data-text="wow…" onclick="speak('wow…')"><span class="play-icon">▶</span>wow…<span class="tooltip">wow…</span></span>
+            </div>
+            <div class="romaji">wow ...</div>
+            <div class="chinese">wow…</div>
+        </div>
+        <button class="play-btn" onclick="speak('wow…')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line27')">编辑</button>
+        <button onclick="toggleBreakdown('bd27')">显示/隐藏逐字翻译</button>
+        <div id="bd27" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>wow…</td><td>wow</td><td>wow…</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line28">
+            <div class="japanese">
+                <span class="word" data-text="wow…" onclick="speak('wow…')"><span class="play-icon">▶</span>wow…<span class="tooltip">wow…</span></span>
+            </div>
+            <div class="romaji">wow ...</div>
+            <div class="chinese">wow…</div>
+        </div>
+        <button class="play-btn" onclick="speak('wow…')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line28')">编辑</button>
+        <button onclick="toggleBreakdown('bd28')">显示/隐藏逐字翻译</button>
+        <div id="bd28" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>wow…</td><td>wow</td><td>wow…</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="stanza">
+        <!-- 第三部分 -->
+        <div class="line" id="line29">
+            <div class="japanese">
+                <span class="word" data-text="男" onclick="speak('男')"><span class="play-icon">▶</span>男<span class="tooltip">男人</span></span>
+                <span class="word" data-text="なら" onclick="speak('なら')"><span class="play-icon">▶</span>なら<span class="tooltip">如果</span></span>
+                <span class="word" data-text="誰か" onclick="speak('誰か')"><span class="play-icon">▶</span>誰か<span class="tooltip">某人</span></span>
+                <span class="word" data-text="の" onclick="speak('の')"><span class="play-icon">▶</span>の<span class="tooltip">的</span></span>
+                <span class="word" data-text="ために" onclick="speak('ために')"><span class="play-icon">▶</span>ために<span class="tooltip">为了</span></span>
+                <span class="word" data-text="強くなれ" onclick="speak('強くなれ')"><span class="play-icon">▶</span>強くなれ<span class="tooltip">变强吧</span></span>
+            </div>
+            <div class="romaji">Otoko nara dareka no tame ni tsuyoku nare</div>
+            <div class="chinese">如果是男人的話 為了某人而變強吧</div>
+        </div>
+        <button class="play-btn" onclick="speak('男なら誰かのために強くなれ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line29')">编辑</button>
+        <button onclick="toggleBreakdown('bd29')">显示/隐藏逐字翻译</button>
+        <div id="bd29" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>男</td><td>otoko</td><td>男人</td></tr>
+                <tr><td>なら</td><td>nara</td><td>如果</td></tr>
+                <tr><td>誰か</td><td>dareka</td><td>某人</td></tr>
+                <tr><td>の</td><td>no</td><td>的</td></tr>
+                <tr><td>ために</td><td>tame ni</td><td>为了</td></tr>
+                <tr><td>強くなれ</td><td>tsuyoku nare</td><td>变强吧</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line30">
+            <div class="japanese">
+                <span class="word" data-text="女" onclick="speak('女')"><span class="play-icon">▶</span>女<span class="tooltip">女人</span></span>
+                <span class="word" data-text="も" onclick="speak('も')"><span class="play-icon">▶</span>も<span class="tooltip">也</span></span>
+                <span class="word" data-text="そうさ" onclick="speak('そうさ')"><span class="play-icon">▶</span>そうさ<span class="tooltip">是这样</span></span>
+                <span class="word" data-text="見てる" onclick="speak('見てる')"><span class="play-icon">▶</span>見てる<span class="tooltip">看着</span></span>
+                <span class="word" data-text="だけじゃ" onclick="speak('だけじゃ')"><span class="play-icon">▶</span>だけじゃ<span class="tooltip">只看的话</span></span>
+                <span class="word" data-text="始まらない" onclick="speak('始まらない')"><span class="play-icon">▶</span>始まらない<span class="tooltip">不开始</span></span>
+            </div>
+            <div class="romaji">Onna mo sou sa miteru dake ja hajima ranai</div>
+            <div class="chinese">女人也是 只看著就不會開始</div>
+        </div>
+        <button class="play-btn" onclick="speak('女もそうさ 見てるだけじゃ始まらない')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line30')">编辑</button>
+        <button onclick="toggleBreakdown('bd30')">显示/隐藏逐字翻译</button>
+        <div id="bd30" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>女</td><td>onna</td><td>女人</td></tr>
+                <tr><td>も</td><td>mo</td><td>也</td></tr>
+                <tr><td>そうさ</td><td>sou sa</td><td>是这样</td></tr>
+                <tr><td>見てる</td><td>miteru</td><td>看着</td></tr>
+                <tr><td>だけじゃ</td><td>dake ja</td><td>只的话</td></tr>
+                <tr><td>始まらない</td><td>hajima ranai</td><td>不开始</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line31">
+            <div class="japanese">
+                <span class="word" data-text="これが" onclick="speak('これが')"><span class="play-icon">▶</span>これが<span class="tooltip">这个</span></span>
+                <span class="word" data-text="正しい" onclick="speak('正しい')"><span class="play-icon">▶</span>正しい<span class="tooltip">正确</span></span>
+                <span class="word" data-text="って" onclick="speak('って')"><span class="play-icon">▶</span>って<span class="tooltip">说</span></span>
+                <span class="word" data-text="言える" onclick="speak('言える')"><span class="play-icon">▶</span>言える<span class="tooltip">能说</span></span>
+                <span class="word" data-text="勇気" onclick="speak('勇気')"><span class="play-icon">▶</span>勇気<span class="tooltip">勇气</span></span>
+                <span class="word" data-text="があれば" onclick="speak('があれば')"><span class="play-icon">▶</span>があれば<span class="tooltip">如果有</span></span>
+                <span class="word" data-text="いい" onclick="speak('いい')"><span class="play-icon">▶</span>いい<span class="tooltip">好</span></span>
+            </div>
+            <div class="romaji">Kore ga tadashii tte ieru yuuki ga areba ii</div>
+            <div class="chinese">能說這是正確的 勇氣如果有就好</div>
+        </div>
+        <button class="play-btn" onclick="speak('これが正しいって 言える勇気があればいい')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line31')">编辑</button>
+        <button onclick="toggleBreakdown('bd31')">显示/隐藏逐字翻译</button>
+        <div id="bd31" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>これが</td><td>kore ga</td><td>这个</td></tr>
+                <tr><td>正しい</td><td>tadashii</td><td>正确</td></tr>
+                <tr><td>って</td><td>tte</td><td>说</td></tr>
+                <tr><td>言える</td><td>ieru</td><td>能说</td></tr>
+                <tr><td>勇気</td><td>yuuki</td><td>勇气</td></tr>
+                <tr><td>があれば</td><td>areba</td><td>如果有</td></tr>
+                <tr><td>いい</td><td>ii</td><td>好</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line32">
+            <div class="japanese">
+                <span class="word" data-text="ただ" onclick="speak('ただ')"><span class="play-icon">▶</span>ただ<span class="tooltip">只是</span></span>
+                <span class="word" data-text="それだけ" onclick="speak('それだけ')"><span class="play-icon">▶</span>それだけ<span class="tooltip">那样就够</span></span>
+                <span class="word" data-text="できれば" onclick="speak('できれば')"><span class="play-icon">▶</span>できれば<span class="tooltip">如果能</span></span>
+            </div>
+            <div class="romaji">Tada sore dake dekireba</div>
+            <div class="chinese">只要那樣就能</div>
+        </div>
+        <button class="play-btn" onclick="speak('ただそれだけ できれば')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line32')">编辑</button>
+        <button onclick="toggleBreakdown('bd32')">显示/隐藏逐字翻译</button>
+        <div id="bd32" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>ただ</td><td>tada</td><td>只是</td></tr>
+                <tr><td>それだけ</td><td>sore dake</td><td>那样就够</td></tr>
+                <tr><td>できれば</td><td>dekireba</td><td>如果能</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line33">
+            <div class="japanese">
+                <span class="word" data-text="英雄" onclick="speak('英雄')"><span class="play-icon">▶</span>英雄<span class="tooltip">英雄</span></span>
+                <span class="word" data-text="さ" onclick="speak('さ')"><span class="play-icon">▶</span>さ<span class="tooltip">语气</span></span>
+            </div>
+            <div class="romaji">Eiyuu sa</div>
+            <div class="chinese">就是英雄</div>
+        </div>
+        <button class="play-btn" onclick="speak('英雄さ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line33')">编辑</button>
+        <button onclick="toggleBreakdown('bd33')">显示/隐藏逐字翻译</button>
+        <div id="bd33" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>英雄</td><td>eiyuu</td><td>英雄</td></tr>
+                <tr><td>さ</td><td>sa</td><td>语气</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="stanza">
+        <!-- 最后重复部分 -->
+        <div class="line" id="line34">
+            <div class="japanese">
+                <span class="word" data-text="男" onclick="speak('男')"><span class="play-icon">▶</span>男<span class="tooltip">男人</span></span>
+                <span class="word" data-text="なら" onclick="speak('なら')"><span class="play-icon">▶</span>なら<span class="tooltip">如果</span></span>
+                <span class="word" data-text="誰か" onclick="speak('誰か')"><span class="play-icon">▶</span>誰か<span class="tooltip">某人</span></span>
+                <span class="word" data-text="の" onclick="speak('の')"><span class="play-icon">▶</span>の<span class="tooltip">的</span></span>
+                <span class="word" data-text="ために" onclick="speak('ために')"><span class="play-icon">▶</span>ために<span class="tooltip">为了</span></span>
+                <span class="word" data-text="強くなれ" onclick="speak('強くなれ')"><span class="play-icon">▶</span>強くなれ<span class="tooltip">变强吧</span></span>
+            </div>
+            <div class="romaji">Otoko nara dareka no tame ni tsuyoku nare</div>
+            <div class="chinese">如果是男人的話 為了某人而變強吧</div>
+        </div>
+        <button class="play-btn" onclick="speak('男なら誰かのために強くなれ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line34')">编辑</button>
+        <button onclick="toggleBreakdown('bd34')">显示/隐藏逐字翻译</button>
+        <div id="bd34" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>男</td><td>otoko</td><td>男人</td></tr>
+                <tr><td>なら</td><td>nara</td><td>如果</td></tr>
+                <tr><td>誰か</td><td>dareka</td><td>某人</td></tr>
+                <tr><td>の</td><td>no</td><td>的</td></tr>
+                <tr><td>ために</td><td>tame ni</td><td>为了</td></tr>
+                <tr><td>強くなれ</td><td>tsuyoku nare</td><td>变强吧</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line35">
+            <div class="japanese">
+                <span class="word" data-text="歯" onclick="speak('歯')"><span class="play-icon">▶</span>歯<span class="tooltip">牙齿</span></span>
+                <span class="word" data-text="を" onclick="speak('を')"><span class="play-icon">▶</span>を<span class="tooltip">对象</span></span>
+                <span class="word" data-text="食いしばって" onclick="speak('食いしばって')"><span class="play-icon">▶</span>食いしばって<span class="tooltip">咬紧牙关</span></span>
+                <span class="word" data-text="思いっきり" onclick="speak('思いっきり')"><span class="play-icon">▶</span>思いっきり<span class="tooltip">全力</span></span>
+                <span class="word" data-text="守り抜け" onclick="speak('守り抜け')"><span class="play-icon">▶</span>守り抜け<span class="tooltip">守护到底</span></span>
+            </div>
+            <div class="romaji">Ha o kui shibatte omoikkiri mamori nuke</div>
+            <div class="chinese">咬緊牙關 全力守護到底</div>
+        </div>
+        <button class="play-btn" onclick="speak('歯を食いしばって 思いっきり守り抜け')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line35')">编辑</button>
+        <button onclick="toggleBreakdown('bd35')">显示/隐藏逐字翻译</button>
+        <div id="bd35" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>歯</td><td>ha</td><td>牙齿</td></tr>
+                <tr><td>を</td><td>o</td><td>对象</td></tr>
+                <tr><td>食いしばって</td><td>kui shibatte</td><td>咬紧</td></tr>
+                <tr><td>思いっきり</td><td>omoikkiri</td><td>全力</td></tr>
+                <tr><td>守り抜け</td><td>mamori nuke</td><td>守护到底</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line36">
+            <div class="japanese">
+                <span class="word" data-text="転んでも" onclick="speak('転んでも')"><span class="play-icon">▶</span>転んでも<span class="tooltip">摔倒也没关系</span></span>
+                <span class="word" data-text="いいよ" onclick="speak('いいよ')"><span class="play-icon">▶</span>いいよ<span class="tooltip">好</span></span>
+                <span class="word" data-text="また" onclick="speak('また')"><span class="play-icon">▶</span>また<span class="tooltip">再次</span></span>
+                <span class="word" data-text="立ち上がれば" onclick="speak('立ち上がれば')"><span class="play-icon">▶</span>立ち上がれば<span class="tooltip">站起来就</span></span>
+                <span class="word" data-text="いい" onclick="speak('いい')"><span class="play-icon">▶</span>いい<span class="tooltip">好</span></span>
+            </div>
+            <div class="romaji">Koronde mo ii yo mata tachi aga reba ii</div>
+            <div class="chinese">摔倒也沒關係 再次站起來就好</div>
+        </div>
+        <button class="play-btn" onclick="speak('転んでもいいよ また立ち上がればいい')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line36')">编辑</button>
+        <button onclick="toggleBreakdown('bd36')">显示/隐藏逐字翻译</button>
+        <div id="bd36" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>転んでも</td><td>koron demo</td><td>摔倒也</td></tr>
+                <tr><td>いいよ</td><td>ii yo</td><td>好</td></tr>
+                <tr><td>また</td><td>mata</td><td>再次</td></tr>
+                <tr><td>立ち上がれば</td><td>tachi aga reba</td><td>站起来就</td></tr>
+                <tr><td>いい</td><td>ii</td><td>好</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line37">
+            <div class="japanese">
+                <span class="word" data-text="ただ" onclick="speak('ただ')"><span class="play-icon">▶</span>ただ<span class="tooltip">只是</span></span>
+                <span class="word" data-text="それだけ" onclick="speak('それだけ')"><span class="play-icon">▶</span>それだけ<span class="tooltip">那样就够</span></span>
+                <span class="word" data-text="できれば" onclick="speak('できれば')"><span class="play-icon">▶</span>できれば<span class="tooltip">如果能</span></span>
+            </div>
+            <div class="romaji">Tada sore dake dekireba</div>
+            <div class="chinese">只要那樣就能</div>
+        </div>
+        <button class="play-btn" onclick="speak('ただそれだけ できれば')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line37')">编辑</button>
+        <button onclick="toggleBreakdown('bd37')">显示/隐藏逐字翻译</button>
+        <div id="bd37" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>ただ</td><td>tada</td><td>只是</td></tr>
+                <tr><td>それだけ</td><td>sore dake</td><td>那样就够</td></tr>
+                <tr><td>できれば</td><td>dekireba</td><td>如果能</td></tr>
+            </table>
+        </div>
+
+        <div class="line" id="line38">
+            <div class="japanese">
+                <span class="word" data-text="英雄" onclick="speak('英雄')"><span class="play-icon">▶</span>英雄<span class="tooltip">英雄</span></span>
+                <span class="word" data-text="さ" onclick="speak('さ')"><span class="play-icon">▶</span>さ<span class="tooltip">语气</span></span>
+            </div>
+            <div class="romaji">Eiyuu sa</div>
+            <div class="chinese">就是英雄</div>
+        </div>
+        <button class="play-btn" onclick="speak('英雄さ')">播放整句</button>
+        <button class="edit-btn" onclick="editLine('line38')">编辑</button>
+        <button onclick="toggleBreakdown('bd38')">显示/隐藏逐字翻译</button>
+        <div id="bd38" class="word-breakdown">
+            <table class="word-table">
+                <tr><th>词</th><th>读音</th><th>逐字翻译 (中文)</th></tr>
+                <tr><td>英雄</td><td>eiyuu</td><td>英雄</td></tr>
+                <tr><td>さ</td><td>sa</td><td>语气</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- 自定义部分 -->
+    <div id="custom-section">
+        <h2>自定义导入和编辑句子/单词</h2>
+        <p>输入格式：每行 "日文单词用空格分隔 // 罗马音 // 中文"，多行支持。导入后可编辑单个单词翻译。支持追加多次导入。</p>
+        <textarea id="custom-input" placeholder="例如: こんにちは // konnichiwa // 你好"></textarea>
+        <button onclick="addCustomContent()">导入并显示</button>
+        <div id="custom-output"></div>
+    </div>
+
+</body>
+</html>
